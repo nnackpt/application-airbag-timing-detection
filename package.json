@@ -1,27 +1,32 @@
 {
-  "name": "application-airbag-timing-detection",
+  "name": "application-airbag-detection",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "setup-py": "IF NOT EXIST .venv (py -m venv .venv) & .venv\\Scripts\\python -m pip install -U pip & .venv\\Scripts\\python -m pip install -r requirements.txt",
+    "fastapi-dev": ".venv\\Scripts\\python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000 --log-level info",
+    "next-dev": "next dev",
+    "dev": "concurrently -k -n \"next,api\" -c \"cyan,magenta\" \"npm:next-dev\" \"npm:fastapi-dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "next": "15.5.0",
+    "postcss": "^8.5.6",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.5.0"
+    "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4.1.12",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "concurrently": "^9.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.5.0",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4.1.12",
+    "typescript": "^5"
   }
 }

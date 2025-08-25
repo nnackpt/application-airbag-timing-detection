@@ -10,6 +10,13 @@
 !.yarn/releases
 !.yarn/versions
 
+/.venv
+/.vscode
+/api/__pycache__
+/api/Outputs
+/api/Screenshots
+/api/Uploads
+
 # testing
 /coverage
 
