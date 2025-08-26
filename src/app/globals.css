@@ -11,6 +11,9 @@ html, body {
 
 :root {
   --primary-color: #005496;
+  --primary-dark: #003d73;
+  --primary-light: #1a6ba6;
+  --gray-50: #f9fafb;
 }
 
 /* @theme inline {
