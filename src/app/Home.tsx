@@ -1,5 +1,3 @@
-"use client"
-
 import ProcessingProgress from "@/components/ProcessingProgress"
 import ResultsDisplay from "@/components/ResultsDisplay"
 import VideoUploader from "@/components/VideoUploader"
@@ -61,7 +59,7 @@ export default function Home() {
     return (
         <div className="min-h-screen">
             {/* hero section */}
-            {/* <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-dark)] text-white py-16">
+            <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-dark)] text-white py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-4xl font-bold mb-4">
                         AI-Powered Aitbag Timing Detection System
@@ -70,54 +68,52 @@ export default function Home() {
                         Advanced computer vision technology for precise airbag deployment analysis with temperature specific detection capabilities
                     </p>
                 </div>
-            </div> */}
+            </div>
 
-            <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-dark)] text-white py-16">
-                {/* main content */}
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* error display */}
-                    {error && (
-                        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-800">{error}</p>
-                        </div>
-                    )}
+            {/* main content */}
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* error display */}
+                {error && (
+                    <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-800">{error}</p>
+                    </div>
+                )}
 
-                    {/* Upload section */}
-                    {state === "upload" && (
-                        <div className="space-y-8">
-                            <VideoUploader 
-                                onUploadSuccess={handleUploadSuccess}
-                                onUploadError={handleUploadError}
-                            />
+                {/* Upload section */}
+                {state === "upload" && (
+                    <div className="space-y-8">
+                        <VideoUploader 
+                            onUploadSuccess={handleUploadSuccess}
+                            onUploadError={handleUploadError}
+                        />
 
-                            {/* Features section */}
-                            
-                        </div>
-                    )}
+                        {/* Features section */}
+                        
+                    </div>
+                )}
 
-                    {/* Processing section */}
-                    {state === "processing" && (
-                        <ProcessingProgress 
+                {/* Processing section */}
+                {state === "processing" && (
+                    <ProcessingProgress 
+                        taskId={taskId}
+                        filename={filename}
+                        temperatureType={temperatureType}
+                        onComplete={handleProcessingComplete}
+                        onError={handleProcessingError}
+                    />
+                )}
+
+                {/* results section */}
+                {state === "results" && (
+                    <div ref={resultsRef}>
+                        <ResultsDisplay
                             taskId={taskId}
                             filename={filename}
                             temperatureType={temperatureType}
-                            onComplete={handleProcessingComplete}
-                            onError={handleProcessingError}
+                            onNewUpload={handleNewUpload}
                         />
-                    )}
-
-                    {/* results section */}
-                    {state === "results" && (
-                        <div ref={resultsRef}>
-                            <ResultsDisplay 
-                                taskId={taskId}
-                                filename={filename}
-                                temperatureType={temperatureType}
-                                onNewUpload={handleNewUpload}
-                            />
-                        </div>
-                    )}
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Technical Secifications */}

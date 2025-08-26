@@ -1,10 +1,10 @@
-export type Temperature = "room" | "hot" | "cold"
+// export type Temperature = "room" | "hot" | "cold"
 
 export interface VideoUploadResponse {
     task_id: string
     message: string
     video_filename: string
-    temperature_type: Temperature
+    temperature_type: string
 }
 
 export interface ProcessingStatus {
@@ -13,29 +13,8 @@ export interface ProcessingStatus {
     progress: number
     message: string
     created_at: string
-    completed_at?: string | null
-    temperature_type?: Temperature
-}
-
-export interface ScreenshotInfo {
-    filename: string
-    path: string
-    full_path: string
-}
-
-export interface ScreenshotsResponse {
-    screenshots: ScreenshotInfo[]
-}
-
-export interface DetectionResult {
-    task_id: string
-    video_filename: string
-    explosion_frame: number | null
-    full_deployment_frame: number | null
-    detected_labels: string[]
-    screenshots: string[]
-    processing_time: number
-    ocr_results: Record<string, string>
+    completed_at?: string
+    temperature_type?: string
 }
 
 export interface VideoRecord {
@@ -43,12 +22,35 @@ export interface VideoRecord {
     task_id: string
     original_filename: string
     video_filename: string
-    status: "pending" | "processing" | "completed" | "failed"
+    status: string
     progress: number
     message: string
     created_at: string
-    completed_at?: string | null
-    output_video_path?: string | null
+    completed_at?: string
+    output_video_path?: string
     screenshots: string[]
-    temperature_type?: Temperature
+    temperature_type?: string
+}
+
+export interface DetectionResult {
+    task_id: string
+    video_filename: string
+    explosion_frame?: number
+    full_deployment_frame?: number
+    detected_labels: string[]
+    screenshots: string[]
+    processing_time: number
+    ocr_results: Record<string, string>
+}
+
+export interface TemperatureOption {
+    value: "room" | "hot" | "cold"
+    label: string
+    frame_range: string
+}
+
+export interface Screenshot {
+    filename: string
+    path: string
+    full_path: string
 }

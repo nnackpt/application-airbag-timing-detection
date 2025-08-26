@@ -1,50 +1,89 @@
-import { DetectionResult, ProcessingStatus, ScreenshotsResponse, Temperature, VideoRecord, VideoUploadResponse } from "@/types/api";
+import { VideoUploadResponse, ProcessingStatus, VideoRecord, DetectionResult, TemperatureOption, Screenshot } from '@/types/api';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
 
-export async function uploadVideo(file: File, temperature: Temperature): Promise<VideoUploadResponse> {
-    const form = new FormData()
-    form.append("file", file)
-    form.append("temperature_type", temperature)
-
-    const res = await fetch(`${API_BASE}/upload`, {
-        method: "POST",
-        body: form
-    })
-    if (!res.ok) throw new Error(await res.text())
-        return (await res.json()) as VideoUploadResponse
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = 'ApiError';
+  }
 }
 
-export async function getStatus(taskId: string): Promise<ProcessingStatus> {
-    const res = await fetch(`${API_BASE}/status/${taskId}`, { cache: "no-store" })
-    if (!res.ok) throw new Error(await res.text())
-    return (await res.json()) as ProcessingStatus
+async function handleResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new ApiError(response.status, errorText || response.statusText);
+  }
+  return response.json();
 }
 
-export async function getScreenshots(taskId: string): Promise<ScreenshotsResponse> {
-    const res = await fetch(`${API_BASE}/screenshots/${taskId}`, { cache: "no-store" })
-    if (!res.ok) throw new Error(await res.text())
-    return (await res.json()) as ScreenshotsResponse
-}
+export const api = {
+  async uploadVideo(file: File, temperatureType: string): Promise<VideoUploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('temperature_type', temperatureType);
 
-export function getVideoUrl(taskId: string): string {
-    return `${API_BASE}/video/${taskId}`
-}
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      body: formData,
+    });
 
-export async function getResults(taskId: string): Promise<DetectionResult> {
-    const res = await fetch(`${API_BASE}/results/${taskId}`, { cache: "no-store" })
-    if (!res.ok) throw new Error(await res.text())
-    return (await res.json()) as DetectionResult
-}
+    return handleResponse<VideoUploadResponse>(response);
+  },
 
-export async function listVideos(limit = 50): Promise<VideoRecord[]> {
-    const url = new URL(`${API_BASE}/videos`)
-    url.searchParams.set("limit", String(limit))
-    const res = await fetch(url.toString(), { cache: "no-store" })
-    if (!res.ok) throw new Error(await res.text())
-    return (await res.json()) as VideoRecord[]
-}
+  async getProcessingStatus(taskId: string): Promise<ProcessingStatus> {
+    const response = await fetch(`${API_BASE_URL}/status/${taskId}`);
+    return handleResponse<ProcessingStatus>(response);
+  },
 
-export function getScreenshotUrl(path: string): string {
-    return `${API_BASE}${path}`
-}
+  async getVideoHistory(limit: number = 50): Promise<VideoRecord[]> {
+    const response = await fetch(`${API_BASE_URL}/videos?limit=${limit}`);
+    return handleResponse<VideoRecord[]>(response);
+  },
+
+  async getDetectionResults(taskId: string): Promise<DetectionResult> {
+    const response = await fetch(`${API_BASE_URL}/results/${taskId}`);
+    return handleResponse<DetectionResult>(response);
+  },
+
+  async getScreenshots(taskId: string): Promise<{ screenshots: Screenshot[] }> {
+    const response = await fetch(`${API_BASE_URL}/screenshots/${taskId}`);
+    return handleResponse<{ screenshots: Screenshot[] }>(response);
+  },
+
+  async getTemperatureOptions(): Promise<{ options: TemperatureOption[] }> {
+    const response = await fetch(`${API_BASE_URL}/temperature-options`);
+    return handleResponse<{ options: TemperatureOption[] }>(response);
+  },
+
+  async downloadVideo(taskId: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/video/${taskId}`);
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Failed to download video');
+    }
+    return response.blob();
+  },
+
+  async downloadScreenshot(taskId: string, filename: string): Promise<Blob> {
+    const response = await fetch(`${API_BASE_URL}/screenshot/${taskId}/${filename}`);
+    if (!response.ok) {
+      throw new ApiError(response.status, 'Failed to download screenshot');
+    }
+    return response.blob();
+  },
+
+  async deleteVideo(taskId: string): Promise<{ message: string }> {
+    const response = await fetch(`${API_BASE_URL}/video/${taskId}`, {
+      method: 'DELETE',
+    });
+    return handleResponse<{ message: string }>(response);
+  },
+
+  getVideoUrl(taskId: string): string {
+    return `${API_BASE_URL}/video/${taskId}`;
+  },
+
+  getScreenshotUrl(taskId: string, filename: string): string {
+    return `${API_BASE_URL}/screenshot/${taskId}/${filename}`;
+  }
+};
