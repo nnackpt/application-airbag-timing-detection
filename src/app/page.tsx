@@ -1,7 +1,5 @@
-import Home from "./Home";
+import { redirect } from "next/navigation";
 
-export default function HomePage() {
-  return (
-    <Home />
-  )
+export default function IndexPage() {
+  redirect("/processing")
 }

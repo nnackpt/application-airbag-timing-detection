@@ -1,76 +1,50 @@
-import { DetectionResult, HealthResponse, LogsResponse, ProcessingStatus, ScreenshotsResponse, TemperatureOption, TemperatureValue, VideoRecordItem, VideoUploadResponse } from "./types"
-import { API_BASE } from "./utils"
+import { DetectionResult, ProcessingStatus, ScreenshotsResponse, Temperature, VideoRecord, VideoUploadResponse } from "@/types/api";
 
-async function json<T>(res: Response): Promise<T> {
-    if (!res.ok) {
-        const text = await res.text()
-        throw new Error(text || `HTTP ${res.status}`)
-    }
-    return res.json() as Promise<T>
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000"
 
-export async function getTemperatureOptions(): Promise<TemperatureOption[]> {
-    const res = await fetch(`${API_BASE}/temperature-options`, { cache: "no-store" })
-    const data = (await json<{ options: TemperatureOption[] }>(res)).options
-    return data
-}
+export async function uploadVideo(file: File, temperature: Temperature): Promise<VideoUploadResponse> {
+    const form = new FormData()
+    form.append("file", file)
+    form.append("temperature_type", temperature)
 
-export async function uploadVideo(file: File, temperature: TemperatureValue): Promise<VideoUploadResponse> {
-    const fd = new FormData()
-    fd.append("file", file)
-    fd.append("temperature_type", temperature)
-    const res = await fetch(`${API_BASE}/upload`, { method: "POST", body: fd })
-    return json<VideoUploadResponse>(res)
+    const res = await fetch(`${API_BASE}/upload`, {
+        method: "POST",
+        body: form
+    })
+    if (!res.ok) throw new Error(await res.text())
+        return (await res.json()) as VideoUploadResponse
 }
 
 export async function getStatus(taskId: string): Promise<ProcessingStatus> {
-    const res = await fetch(`${API_BASE}/status/${encodeURIComponent(taskId)}`, { cache: "no-store" })
-    return json<ProcessingStatus>(res)
-}
-
-export async function pollStatus(taskId: string, onTick?: (s: ProcessingStatus) => void, intervalMs: number = 1500): Promise<ProcessingStatus> {
-    for (;;) {
-        const s = await getStatus(taskId)
-        onTick?.(s)
-        if (s.status === "completed" || s.status === "failed") return s
-        await new Promise((r) => setTimeout(r, intervalMs))
-    }
-}
-
-export async function getVideos(limit: number = 50): Promise<VideoRecordItem[]> {
-    const res = await fetch(`${API_BASE}/videos?limit=${limit}`, { cache: "no-store" })
-    return json<VideoRecordItem[]>(res)
-}
-
-export function videoStreamUrl(taskId: string): string {
-    return `${API_BASE}/video/${encodeURIComponent(taskId)}`
+    const res = await fetch(`${API_BASE}/status/${taskId}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(await res.text())
+    return (await res.json()) as ProcessingStatus
 }
 
 export async function getScreenshots(taskId: string): Promise<ScreenshotsResponse> {
-    const res = await fetch(`${API_BASE}/screenshots/${encodeURIComponent(taskId)}`, { cache: "no-store" })
-    return json<ScreenshotsResponse>(res)
+    const res = await fetch(`${API_BASE}/screenshots/${taskId}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(await res.text())
+    return (await res.json()) as ScreenshotsResponse
 }
 
-export function screenshotsUrl(taskId: string, filename: string): string {
-    return `${API_BASE}/screenshots/${encodeURIComponent(taskId)}/${encodeURIComponent(filename)}`
+export function getVideoUrl(taskId: string): string {
+    return `${API_BASE}/video/${taskId}`
 }
 
 export async function getResults(taskId: string): Promise<DetectionResult> {
-    const res = await fetch(`${API_BASE}/results/${encodeURIComponent(taskId)}`, { cache: "no-store" })
-    return json<DetectionResult>(res)
+    const res = await fetch(`${API_BASE}/results/${taskId}`, { cache: "no-store" })
+    if (!res.ok) throw new Error(await res.text())
+    return (await res.json()) as DetectionResult
 }
 
-export async function getHealth(): Promise<HealthResponse> {
-    const res = await fetch(`${API_BASE}/health`, { cache: "no-store" })
-    return json<HealthResponse>(res)
+export async function listVideos(limit = 50): Promise<VideoRecord[]> {
+    const url = new URL(`${API_BASE}/videos`)
+    url.searchParams.set("limit", String(limit))
+    const res = await fetch(url.toString(), { cache: "no-store" })
+    if (!res.ok) throw new Error(await res.text())
+    return (await res.json()) as VideoRecord[]
 }
 
-export async function getLogs(taskId: string): Promise<LogsResponse> {
-    const res = await fetch(`${API_BASE}/logs/${encodeURIComponent(taskId)}`, { cache: "no-store" })
-    return json<LogsResponse>(res)
-}
-
-export async function deleteVideo(taskId: string): Promise<{ message: string }> {
-    const res = await fetch(`${API_BASE}/video/${encodeURIComponent(taskId)}`, { method: "DELETE" })
-    return json<{ message: string }>(res)
+export function getScreenshotUrl(path: string): string {
+    return `${API_BASE}${path}`
 }
