@@ -1,6 +1,7 @@
 "use client"
 
 import { Activity, History, Menu, X } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -20,12 +21,20 @@ export default function Navigation() {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-[var(--primary-color)] rounded-lg flex items-center justify-center">
-                  <Activity className="w-6 h-6 text-white" />
+                <div className="relative w-15 h-15 rounded-lg overflow-hidden">
+                  {/* <Activity className="w-6 h-6 text-white" /> */}
+                  <Image 
+                    src="/Autoliv_logo_blue.png"
+                    alt="Airbag Timing Detection"
+                    fill
+                    sizes="100px"
+                    className="object-contain"
+                    priority
+                  />
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Airbag Timing Detection</h1>
-                  <p className="text-xs text-gray-500">AI-Powered Analysis System</p>
+                  {/* <p className="text-xs text-gray-500">AI-Powered Analysis System</p> */}
                 </div>
               </Link>
             </div>

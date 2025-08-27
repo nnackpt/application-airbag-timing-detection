@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "setup-py": "IF NOT EXIST .venv (py -m venv .venv) & .venv\\Scripts\\python -m pip install -U pip & .venv\\Scripts\\python -m pip install -r requirements.txt",
-    "fastapi-dev": ".venv\\Scripts\\python -m uvicorn api.main:app --reload --host 127.0.0.1 --port 8000 --log-level info",
-    "next-dev": "next dev",
+    "fastapi-dev": ".venv\\\\Scripts\\\\python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000 --log-level info",
+    "next-dev": "next dev --port 3000 --hostname 0.0.0.0",
     "dev": "concurrently -k -n \"next,api\" -c \"cyan,magenta\" \"npm:next-dev\" \"npm:fastapi-dev\"",
     "build": "next build",
     "start": "next start",

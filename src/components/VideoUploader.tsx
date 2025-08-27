@@ -1,13 +1,24 @@
 import { api, ApiError } from "@/lib/api"
 import { TemperatureOption } from "@/types/api"
 import { AlertCircle, Thermometer, Upload, Video } from "lucide-react"
-import React, { useCallback, useRef, useState } from "react"
+import React, { useCallback, useEffect, useRef, useState } from "react"
 import LoadingSpinner from "./LoadingSpinner"
 
 interface VideoUploaderProps {
     onUploadSuccess: (taskId: string, filename: string, temperatureType: string) => void
     onUploadError: (error: string) => void
 }
+
+const MAX_FILE_SIZE = 100 * 1024 * 1024
+const ALLOWED_MIME = new Set([
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/avi",
+    "video/mov"
+])
+const ALLOWED_EXT = new Set([".mp4", ".mov", ".avi"])
+const ACCEPT_ATTR = ".mp4,.mov,.avi,video/mp4,video/quicktime,video/x-msvideo"
 
 export default function VideoUploader({ onUploadSuccess, onUploadError }: VideoUploaderProps) {
     const [isDragging, setIsDragging] = useState(false)
@@ -18,11 +29,20 @@ export default function VideoUploader({ onUploadSuccess, onUploadError }: VideoU
     const [error, setError] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
-    useState(() => {
+    useEffect(() => {
+        let isMounted = true
         api.getTemperatureOptions()
-            .then(data => setTemperatureOptions(data.options))
+            .then((data) => {
+                if (isMounted) {
+                    setTemperatureOptions(data.options)
+                }
+            })
             .catch(err => console.error("Failed to load temperature options:", err))
-    })
+
+        return () => {
+            isMounted = false
+        }
+    }, [])
 
     const handleDragOver = useCallback((e: React.DragEvent) => {
         e.preventDefault()
@@ -44,13 +64,23 @@ export default function VideoUploader({ onUploadSuccess, onUploadError }: VideoU
         }
     }, [])
 
+    const isSupportedVideo = (file: File): boolean => {
+        const mimeOk = ALLOWED_MIME.has(file.type)
+        const ext = "." + (file.name.split(".").pop()?.toLowerCase() || "")
+        const extOk = ALLOWED_EXT.has(ext)
+        return mimeOk || extOk
+    }
+
     const handleFileSelection = (file: File) => {
         setError(null)
 
-        // Validate type
-        const validTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo']
-        if (!validTypes.includes(file.type)) {
+        if (!isSupportedVideo(file)) {
             setError("Please select a valid video file (MP4, AVI, MOV)")
+            return
+        }
+
+        if (file.size > MAX_FILE_SIZE) {
+            setError("File is too large. Max 100MB")
             return
         }
 
@@ -190,7 +220,7 @@ export default function VideoUploader({ onUploadSuccess, onUploadError }: VideoU
                                     }`}
                                 >
                                     <div className="font-semibold text-gray-900">{option.label}</div>
-                                    <div className="text-sm text-gray-600">Frames {option.frame_range}</div>
+                                    {/* <div className="text-sm text-gray-600">Frames {option.frame_range}</div> */}
                                 </div>
                             </label>
                         ))}
@@ -213,7 +243,7 @@ export default function VideoUploader({ onUploadSuccess, onUploadError }: VideoU
                         onClick={handleUpload}
                         disabled={isUploading}
                         className="bg-[var(--primary-color)] text-white px-8 py-3 rounded-lg font-semibold 
-                                    hover:bg-[var(--primary-color-dark)] transition-all duration-200
+                                    hover:bg-[var(--primary-dark)] transition-all duration-200 cursor-pointer
                                     disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto space-x-2"                   
                     >
                         {isUploading ? (

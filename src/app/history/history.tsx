@@ -193,7 +193,7 @@ export default function ProcessingHistory({ refreshTrigger }: ProcessingHistoryP
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] bg-white min-w-[150px]"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] bg-white min-w-[150px] text-black"
             >
               {statusOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -211,7 +211,7 @@ export default function ProcessingHistory({ refreshTrigger }: ProcessingHistoryP
               placeholder="Search by filename or task ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)]"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] text-black"
             />
           </div>
         </div>
@@ -348,7 +348,7 @@ export default function ProcessingHistory({ refreshTrigger }: ProcessingHistoryP
                     <button
                       onClick={() => handleDelete(video.task_id, video.original_filename)}
                       disabled={deletingId === video.task_id}
-                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
                       title="Delete"
                     >
                       {deletingId === video.task_id ? (

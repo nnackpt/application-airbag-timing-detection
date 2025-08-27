@@ -1,6 +1,6 @@
 import { VideoUploadResponse, ProcessingStatus, VideoRecord, DetectionResult, TemperatureOption, Screenshot } from '@/types/api';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = '/fastapi';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {

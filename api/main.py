@@ -50,7 +50,7 @@ OCR_MODEL_PATH = MODEL_DIR / "ocr"
 
 # ===== UPDATED ROBUST CIRCLE CONFIG =====
 MAX_FRAMES_FOR_CIRCLE_SEARCH = 80   # ลองหาให้เต็มที่กี่เฟรมก่อนใช้ fallback ชื่อ
-CIRCLE_MIN_DIST = 45                # เดิม 60
+CIRCLE_MIN_DIST = 50                # เดิม 60
 CIRCLE_PARAM_SETS = [
     # ชุดมาตรฐาน (เดิมใกล้เคียง)
     dict(dp=1.2, param1=80, param2=30, minRadius=8,  maxRadius=60),
@@ -60,14 +60,24 @@ CIRCLE_PARAM_SETS = [
     dict(dp=1.2, param1=60, param2=20, minRadius=6,  maxRadius=85),
 ]
 
-SMOOTH_SIZE = 3
-PLATEAU_ALPHA = 0.985
-
 # ====== STABILIZATION / GATING SETTINGS ======
 WARMUP_MIN_FRAMES    = 4     # ต้องดูอย่างน้อยกี่เฟรมก่อนจะยอม finalize
 MERGE_RADIUS         = 32    # รัศมีรวมคลัสเตอร์ของ center (พิกเซล)
 MIN_HITS_PER_CENTER  = 3     # center ต้องถูกเห็นซ้ำอย่างน้อยกี่ครั้ง
 GATE_RADIUS          = 180   # วงที่ใช้จับคู่ต้องไม่ไกลจากป้ายชื่อเกินระยะนี้
+
+# ===== FULL DEPLOYMENT PARAMS PER TEMPERATURE =====
+FULL_DEPLOY_PARAMS: dict[str, dict[str, float | int]] = {
+    "room": {"smooth_size": 3, "plateau_alpha": 0.985},
+    "hot": {"smooth_size": 3, "plateau_alpha": 0.985},
+    "cold": {"smooth_size": 3, "plateau_alpha": 0.985},
+    }
+
+def get_full_deploy_params(temperature_type: str) -> tuple[int, float]:
+    params = FULL_DEPLOY_PARAMS.get(temperature_type, FULL_DEPLOY_PARAMS["room"]) 
+    smooth_size = max(1, int(params.get("smooth_size", 3))) 
+    plateau_alpha = float(params.get("plateau_alpha", 0.985))
+    return smooth_size, plateau_alpha
 
 # ===== IN-MEMORY DATA STORAGE =====
 # Replace SQLite with in-memory dictionaries
@@ -737,29 +747,42 @@ class AirbagDetector:
             if len(mask_area_data) > 0:
                 areas = np.array([area for _, area in mask_area_data])
                 frames = [frame_num for frame_num, _ in mask_area_data]
-                
+
+
+                # ✅ ใช้ค่าตามอุณหภูมิ
+                smooth_size, plateau_alpha = get_full_deploy_params(temperature_type)
+
+
                 # ตรวจสอบให้แน่ใจว่ามีข้อมูลเพียงพอสำหรับการทำ Smoothing
-                if len(areas) >= 3: # ต้องมีอย่างน้อย 3 จุดสำหรับ uniform_filter1d(size=3)
-                    smoothed_areas = uniform_filter1d(areas, size=SMOOTH_SIZE)
+                if len(areas) >= max(3, smooth_size):
+                    smoothed_areas = uniform_filter1d(areas, size=smooth_size)
                 else:
                     # ถ้าข้อมูลน้อยเกินไป ให้ใช้พื้นที่เดิมโดยไม่มีการ smoothing
                     smoothed_areas = areas
-                    logger.info("⚠️ Not enough data points for effective smoothing. Using raw area data for plateau detection.")
-                
+                    logger.info(
+                    f"⚠️ Not enough data points for smoothing (need >= {max(3, smooth_size)}). Using raw area data."
+                    )
+
+
                 peak_index = np.argmax(smoothed_areas)
                 plateau_frame = frames[peak_index]
-                
-                # กำหนด threshold ให้ยืดหยุ่นขึ้นเล็กน้อย
-                # ถ้าพื้นที่สูงสุดเป็น 0 (กรณีไม่มี detection ที่มี mask) ให้ threshold เป็น 0 ด้วย
-                threshold = smoothed_areas[peak_index] * PLATEAU_ALPHA if smoothed_areas[peak_index] > 0 else 0
-                
-                # หาจุดที่พื้นที่เริ่มลดลงจาก plateau (หรือคงที่ในระดับสูง)
+
+
+                # ✅ ใช้ threshold ตาม alpha ของอุณหภูมิ
+                max_area = smoothed_areas[peak_index]
+                threshold = max_area * plateau_alpha if max_area > 0 else 0
+
+
                 for i in range(peak_index, len(smoothed_areas)):
                     if smoothed_areas[i] < threshold:
                         break
                     plateau_frame = frames[i]
-                
-                logger.info(f"\n✨ Full Deployment Detected at Frame (within {START_FRAME}-{END_FRAME}): {plateau_frame} (Smoothed Area: {smoothed_areas[peak_index]})")
+
+
+                logger.info(
+                f"✨ Full Deployment Detected at Frame (within {START_FRAME}-{END_FRAME}): "
+                f"{plateau_frame} (Smoothed Area: {max_area}, smooth_size={smooth_size}, alpha={plateau_alpha})"
+                )
                 
                 # Capture screenshot
                 cap_final = cv2.VideoCapture(str(video_path))
@@ -787,7 +810,11 @@ class AirbagDetector:
 app = FastAPI(title="Airbag Detection API", version="2.0.0")
 
 # CORS middleware
-origins = ["http://localhost:3000", "http://10.83.49.188:3000"]
+origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000", 
+    "http://10.83.49.188:3000"
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,

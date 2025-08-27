@@ -3,6 +3,7 @@
 import ProcessingProgress from "@/components/ProcessingProgress"
 import ResultsDisplay from "@/components/ResultsDisplay"
 import VideoUploader from "@/components/VideoUploader"
+import Image from "next/image"
 import { useSearchParams } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 
@@ -64,61 +65,74 @@ export default function Home() {
             {/* <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-color-dark)] text-white py-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-4xl font-bold mb-4">
-                        AI-Powered Aitbag Timing Detection System
+                        AI-Powered Airbag Timing Detection System
                     </h1>
                     <p className="text-xl opacity-90 max-w-3xl mx-auto">
                         Advanced computer vision technology for precise airbag deployment analysis with temperature specific detection capabilities
                     </p>
                 </div>
             </div> */}
+            <section className="relative text-white py-16">
+                <Image 
+                    src="/hero.jpg"
+                    alt="Background"
+                    fill
+                    priority
+                    sizes="100vw"
+                    className="object-cover blur-sm scale-105"
+                    aria-hidden
+                />
 
-            <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-dark)] text-white py-16">
-                {/* main content */}
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* error display */}
-                    {error && (
-                        <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-800">{error}</p>
-                        </div>
-                    )}
+                <div className="absolute inset-0 bg-black/30" aria-hidden />
 
-                    {/* Upload section */}
-                    {state === "upload" && (
-                        <div className="space-y-8">
-                            <VideoUploader 
-                                onUploadSuccess={handleUploadSuccess}
-                                onUploadError={handleUploadError}
-                            />
+                {/* <div className="bg-gradient-to-r from-[var(--primary-color)] to-[var(--primary-dark)] text-white py-16"> */}
+                    {/* main content */}
+                    <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {/* error display */}
+                        {error && (
+                            <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                                <p className="text-red-800">{error}</p>
+                            </div>
+                        )}
 
-                            {/* Features section */}
-                            
-                        </div>
-                    )}
+                        {/* Upload section */}
+                        {state === "upload" && (
+                            <div className="space-y-8">
+                                <VideoUploader 
+                                    onUploadSuccess={handleUploadSuccess}
+                                    onUploadError={handleUploadError}
+                                />
 
-                    {/* Processing section */}
-                    {state === "processing" && (
-                        <ProcessingProgress 
-                            taskId={taskId}
-                            filename={filename}
-                            temperatureType={temperatureType}
-                            onComplete={handleProcessingComplete}
-                            onError={handleProcessingError}
-                        />
-                    )}
+                                {/* Features section */}
+                                
+                            </div>
+                        )}
 
-                    {/* results section */}
-                    {state === "results" && (
-                        <div ref={resultsRef}>
-                            <ResultsDisplay 
+                        {/* Processing section */}
+                        {state === "processing" && (
+                            <ProcessingProgress 
                                 taskId={taskId}
                                 filename={filename}
                                 temperatureType={temperatureType}
-                                onNewUpload={handleNewUpload}
+                                onComplete={handleProcessingComplete}
+                                onError={handleProcessingError}
                             />
-                        </div>
-                    )}
-                </div>
-            </div>
+                        )}
+
+                        {/* results section */}
+                        {state === "results" && (
+                            <div ref={resultsRef}>
+                                <ResultsDisplay 
+                                    taskId={taskId}
+                                    filename={filename}
+                                    temperatureType={temperatureType}
+                                    onNewUpload={handleNewUpload}
+                                />
+                            </div>
+                        )}
+                    </div>
+                {/* </div> */}
+            </section>
 
             {/* Technical Secifications */}
             {state === "upload" && (
